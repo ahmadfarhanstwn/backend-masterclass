@@ -7,19 +7,25 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type Store struct {
+type Store interface {
+	Querier
+	execTx(ctx context.Context, fn func(*Queries) error) error
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
+type SQLStore struct {
 	*Queries
 	conn *pgx.Conn
 }
 
-func NewStore(conn *pgx.Conn) *Store {
-	return &Store{
+func NewStore(conn *pgx.Conn) Store {
+	return &SQLStore{
 		conn:    conn,
 		Queries: New(conn),
 	}
 }
 
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.conn.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return err
@@ -50,7 +56,7 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
