@@ -21,6 +21,9 @@ migrateup1:
 migratedown:
 	migrate -path db/migration -database "$(DB_URL)" -verbose down
 
+migratedown1:
+	migrate -path db/migration -database "$(DB_URL)" -verbose down 1
+
 sqlc:
 	sqlc generate
 
@@ -33,4 +36,4 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/ahmadfarhanstwn/backend-masterclass/db/sqlc Store
 
-.PHONY: network postgres createdb dropdb migrateup migrateup1 migratedown sqlc test server mock
+.PHONY: network postgres createdb dropdb migrateup migrateup1 migratedown migratedown1 sqlc test server mock
