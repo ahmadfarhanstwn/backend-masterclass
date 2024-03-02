@@ -26,7 +26,7 @@ func TestGetAccountAPI(t *testing.T) {
 
 	store.EXPECT().GetAccountForUpdate(gomock.Any(), gomock.Eq(account.ID)).Times(1).Return(account, nil)
 
-	server := NewServer(store)
+	server := NewTestServer(t, store)
 	recorder := httptest.NewRecorder()
 
 	url := fmt.Sprintf("/accounts/%d", account.ID)
