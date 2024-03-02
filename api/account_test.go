@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	mockdb "github.com/ahmadfarhanstwn/backend-masterclass/db/mock"
 	db "github.com/ahmadfarhanstwn/backend-masterclass/db/sqlc"
@@ -17,7 +18,8 @@ import (
 )
 
 func TestGetAccountAPI(t *testing.T) {
-	account := generateRandomAccount()
+	user, _ := randomUser(t)
+	account := generateRandomAccount(user.Username)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -33,16 +35,17 @@ func TestGetAccountAPI(t *testing.T) {
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err)
 
+	addAuth(t, request, server.token, authTypeBearer, user.Username, time.Minute)
 	server.router.ServeHTTP(recorder, request)
 
 	require.Equal(t, http.StatusOK, recorder.Code)
 	requireBodyMatchAccount(t, recorder.Body, account)
 }
 
-func generateRandomAccount() db.Account {
+func generateRandomAccount(owner string) db.Account {
 	return db.Account{
 		ID:       util.RandomInt(1, 100),
-		Owner:    util.RandomOwner(),
+		Owner:    owner,
 		Balance:  util.RandomMoney(),
 		Currency: util.RandomCurrency(),
 	}
