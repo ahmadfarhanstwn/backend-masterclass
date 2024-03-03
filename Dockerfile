@@ -2,11 +2,20 @@ FROM golang:1.21.7-alpine3.19 AS builder
 WORKDIR /app
 COPY . .
 RUN go build -o main main.go
+RUN apk add curl
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz
 
 FROM alpine:3.19
 WORKDIR /app
 COPY --from=builder /app/main .
+COPY --from=builder ./app/migrate ./migrate
 COPY app.env .
+COPY entrypoint.sh .
+COPY wait-for.sh .
+COPY db/migration ./migration
 
 EXPOSE 8080
 CMD [ "/app/main" ]
+RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/wait-for.sh
+ENTRYPOINT [ "/app/entrypoint.sh" ]
